@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(readxl)
+library(chron)
 
 
 #======================Read data=========================================
@@ -40,6 +41,9 @@ for (x in all_excel_path) {
 
 names(school_terms)[5] <- "region"
 
+#### Currently there are errors reading 2019 and 2020 spreadsheets due to date formats in those two files not being compatible. Please rectify
+
+
 #=====================DATA CLEANING============================================
 
 hub_clean <- hub_raw %>% 
@@ -51,32 +55,64 @@ hub_clean <- hub_raw %>%
   mutate(ActivityDate = dmy(ActivityDate),
          EndTime = as.character(EndTime)) %>% 
   unite(Start, c(ActivityDate, StartTime), sep = " ", remove = FALSE) %>% 
-  mutate(ActivityDate = as_date(ifelse(EndTime == "00:00:00", ActivityDate + days(1), ActivityDate))) %>% 
+  mutate(ActivityDate = as_date(ifelse(EndTime == "00:00:00", ActivityDate + days(1), ActivityDate))) %>%
   unite(End, c(ActivityDate, EndTime), sep = " ", remove = FALSE) %>% 
   select(-ActivityDate, -StartTime, -EndTime) %>% 
   
-  #determine day, month and year of activity as new distinct columns
+  #determine duration, day, month and year of activity as new distinct columns
   mutate(day = wday(Start, label = TRUE),
          month = month(Start),
-         year = year(Start)) %>% 
+         year = year(Start),
+         week_of_year = week(Start)) %>% 
   
   #drop observations with child or adult participant >90th percentile
   filter(ChildParticipants < quantile(ChildParticipants, 0.90) | AdultParticipants < quantile(AdultParticipants, 0.90))
-  
-#identify most frequent Start time by activity in 2019
 
-freq_start <- hub_clean %>% 
-  filter(year == 2019) %>% 
-  group_by(ProgrammeID) %>% 
-  summarise(start_time = )
-  
-  
- 
-  #ref data frame for all unique ID and names
-code <- hub_clean %>% 
+#ref data frame for all unique ID and names
+data_cube <- hub_clean %>% 
   select(ProgrammeID, ProgrammeName, ProgrammeCategoryID, ShortName, ServiceTypeID, CategoryName, ShortName.1) %>% 
   distinct()
+
+#identify most frequent start time, week of year and duration by activity and hub in 2019
+
+hub_2019 <- hub_clean %>% 
+  filter(year == 2019 & !str_detect(Start, "NA") | !str_detect(End, "NA")) %>% 
+  mutate(Start = ymd_hms(Start),
+         End = ymd_hms(End),
+         duration = time_length(interval(Start, End), "hours")) %>% 
+  separate(Start, c("StartDate", "StartTime"), sep = " ") 
+
+most_freq_start_time <- hub_2019 %>% 
+  group_by(ProgrammeID, HubRandomID) %>% 
+  count(StartTime) %>% 
+  top_n(1) %>% 
+  #take average if tie
+  select(-n) %>% 
+  summarise(StartTime = mean(times(StartTime)))
   
+most_freq_week <- hub_2019 %>% 
+  group_by(ProgrammeID, HubRandomID) %>% 
+  count(week_of_year) %>% 
+  top_n(1) %>% 
+  #take average if tie
+  select(-n) %>% 
+  summarise(week_of_year = mean(week_of_year))
+
+most_freq_duration <- hub_2019 %>% 
+  group_by(ProgrammeID, HubRandomID) %>% 
+  count(duration) %>% 
+  top_n(1) %>% 
+  #take average if tie
+  select(-n) %>% 
+  summarise(duration = mean(duration))
+
+#identify most frequent volunteer counts by activity and hub in 2019
+
+
+
+
+ 
+ 
   
 
 
