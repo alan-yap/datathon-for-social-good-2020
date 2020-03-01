@@ -69,7 +69,7 @@ read_clean_data <- function(){
               prop_hub = sum(HubVolunteers) / total_volunteers) %>% 
     replace_na(list(prop_school = 0, prop_external = 0, prop_hub = 0)) %>% # for hubs that have never had volunteers in 2019
     select(HubRandomID, prop_external, prop_hub, prop_school) %>% 
-    right_join(enframe(unique(hub_clean$HubRandomID), name = NULL), by = c('HubRandomID' = 'value')) %>% 
+    right_join(enframe(unique(hub_filtered$HubRandomID), name = NULL), by = c('HubRandomID' = 'value')) %>% 
     replace_na(list(prop_school = overall_volunteer_breakdown$prop_school, 
                     prop_external = overall_volunteer_breakdown$prop_external, 
                     prop_hub = overall_volunteer_breakdown$prop_hub)) # assume population distribution for the hubs that don't have activities in 2019
