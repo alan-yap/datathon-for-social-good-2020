@@ -11,6 +11,8 @@
 
 #======================Read data=========================================
 
+source ('setup.R')
+
 suppressWarnings(
 hub_raw <- read_csv("1_Data/Internal data track/Datathon - CHA activities 2016-2020.csv"))
 
