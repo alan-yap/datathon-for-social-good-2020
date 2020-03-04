@@ -5,6 +5,8 @@ library(lubridate)
 library(readxl)
 library(chron)
 library(fs)
+library(nousstyle)
+library(plotly)
 
 
 # Run all the custom functions stored in folder.
