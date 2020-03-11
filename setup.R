@@ -5,6 +5,10 @@ library(lubridate)
 library(readxl)
 library(chron)
 library(fs)
+library(factoextra)
+library(cluster)
+library(Rtsne)
+library(nousstyle)
 
 
 # Run all the custom functions stored in folder.
