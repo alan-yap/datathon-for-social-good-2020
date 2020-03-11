@@ -1,0 +1,356 @@
+---
+title: "Hub feature analysis"
+author: "Alan Yap"
+date: "11/03/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+load("all_objects.RData")
+library(nousstyle)
+library(tidyverse)
+
+```
+
+## Introduction
+
+<!-- This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>. -->
+
+<!-- When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this: -->
+
+Hub features are summarised in three dataframes 
+
+1. hub_feature contains all numerical features by hubs from 2016 to 2019. Use this for cluster analysis or principal component analysis.
+
+```{r}
+glimpse(hub_feature)
+```
+
+2. common_program is a mixed dataframe listing the top three most common programs by hubs from 2016 to 2019
+
+```{r}
+glimpse(common_program)
+```
+
+3. status is a mixed dataframe indicating the status of each hub as at the end of 2019 and number of years in operation
+
+```{r}
+glimpse(status)
+```
+
+These dataframes are kept separate to avoid creating a mixed dataframe. The next set of exploratory analysis looks at large hubs vs small hubs.
+
+## Large hubs
+
+Characteristics of top ten largest hubs by annual participant count in 2019
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019 & str_detect(variable, "prtcpnt") & !str_detect(variable, "all") & !str_detect(variable, "avg")) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID, fill = variable),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_prtcpnt, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual participant count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 50000, 5000),
+                     limits = c(0, 50000),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+
+
+```
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019 & variable == "avg_prtcpnt_per_activity") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_prtcpnt_per_activity, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Average participant per activity",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 80, 10),
+                     limits = c(0, 80)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019 & variable == "annual_activity_count") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_activity_count, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual activity count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 1500, 250),
+                     limits = c(0, 1500),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019 & variable == "annual_program_count") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_program_count, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual program count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 25, 5),
+                     limits = c(0, 25)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+```{r, echo=FALSE}
+common_program %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  ggplot() +
+  geom_bar(aes(y = n, x = HubRandomID, fill = ProgrammeName),
+           stat = "identity") +
+  labs(title = "Top three most common programs",
+       y = "Activity count") +
+  scale_y_continuous(breaks = seq(0, 1000, 100),
+                     limits = c(0, 1000)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & year == 2019 & str_detect(variable, "volunteer") &
+           !str_detect(variable, "all") & !str_detect(variable, "avg")) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID, fill = variable),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_volunteer, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual volunteer count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 8000, 500),
+                     limits = c(0, 8000)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+```{r, echo=FALSE}
+
+inactive_hub <- status %>%
+  filter(HubRandomID %in% top_prtcpnt_hub & status_at_dec_19 == "Inactive")
+
+switch <- ifelse(nrow(inactive_hub) > 0, TRUE, FALSE)
+
+status %>%
+  filter(HubRandomID %in% top_prtcpnt_hub) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  ggplot() +
+  geom_bar(aes(y = years_in_operation, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_yrs_in_operation, linetype = "Average all hubs")) +
+  {if (switch) geom_text(aes(5, 5, label = sprintf("Hub %s is inactive \n as of Dec 2019", inactive_hub$HubRandomID))) } +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Years in operation",
+       y = "Years") +
+  scale_y_continuous(breaks = seq(0, 5, 1),
+                     limits = c(0, 5)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+## Small participants hub
+
+Characteristics of top ten smallest hubs by annual participant count in 2019
+
+```{r, echo=FALSE}
+hub_feature %>%
+  select(matches("prtcpnt"), HubRandomID, year) %>% 
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019 & !str_detect(variable, "all") & !str_detect(variable, "avg")) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>% 
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID, fill = variable),
+           stat = "identity") +
+  labs(title = "Annual participant count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 1000, 100),
+                     limits = c(0, 1000),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+
+
+
+```
+
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019 & variable == "avg_prtcpnt_per_activity") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_prtcpnt_per_activity, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Average participant per activity",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 12, 2),
+                     limits = c(0, 12)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019 & variable == "annual_activity_count") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_activity_count, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual activity count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 1000, 100),
+                     limits = c(0, 1000),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019 & variable == "annual_program_count") %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_program_count, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual program count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 25, 5),
+                     limits = c(0, 25)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+```{r, echo=FALSE}
+common_program %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  ggplot() +
+  geom_bar(aes(y = n, x = HubRandomID, fill = ProgrammeName),
+           stat = "identity") +
+  labs(title = "Top three most common programs",
+       y = "Activity count") +
+  scale_y_continuous(breaks = seq(0, 200, 20),
+                     limits = c(0, 200)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+
+```{r, echo=FALSE}
+hub_feature %>%
+  gather(variable, value, -HubRandomID, -year) %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & year == 2019 & str_detect(variable, "volunteer") &
+           !str_detect(variable, "all") & !str_detect(variable, "avg")) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  select(-year) %>%
+  ggplot() +
+  geom_bar(aes(y = value, x = HubRandomID, fill = variable),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_hub_annual_volunteer, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  labs(title = "Annual volunteer count",
+       y = "Count") +
+  scale_y_continuous(breaks = seq(0, 500, 50),
+                     limits = c(0, 500)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+
+```
+
+
+```{r, echo=FALSE}
+inactive_hub <- status %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub & status_at_dec_19 == "Inactive")
+
+switch <- ifelse(nrow(inactive_hub) > 0, TRUE, FALSE)
+
+status %>%
+  filter(HubRandomID %in% bottom_prtcpnt_hub) %>%
+  mutate(HubRandomID = as.factor(HubRandomID)) %>%
+  ggplot() +
+  geom_bar(aes(y = years_in_operation, x = HubRandomID),
+           stat = "identity") +
+  geom_hline(data = avg_line, aes(yintercept = avg_yrs_in_operation, linetype = "Average all hubs")) +
+  scale_linetype_manual(name = "mean", values = 2,
+                        guide = guide_legend(override.aes = list(color = "black"))) +
+  {if (switch) geom_text(aes(8, 5, label = sprintf("Hub %s is inactive \n as of Dec 2019", inactive_hub$HubRandomID))) } +
+  labs(title = "Years in operation",
+       y = "Years") +
+  scale_y_continuous(breaks = seq(0, 5, 1),
+                     limits = c(0, 5)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+
+<!-- Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot. -->
+
