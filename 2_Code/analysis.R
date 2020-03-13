@@ -46,7 +46,7 @@ duration_df <- df_2019 %>%
             n = n()) %>% 
   mutate(avg_child_participants = child_participants / n,
          avg_adult_participants = adult_participants / n) %>% 
-  filter(n > 100) %>% 
+  filter(n > 100) %>% # only look at sample size > 100
   arrange(desc(avg_child_participants), desc(avg_adult_participants))
 
 start_hour_df <- df_2019 %>% 
@@ -57,5 +57,5 @@ start_hour_df <- df_2019 %>%
   mutate(avg_child_participants = child_participants/n,
          avg_adult_participants = adult_participants/n) %>% 
   drop_na() %>% 
-  filter(n > 100) %>% 
+  filter(n > 100) %>% # only look at sample size > 100
   arrange(desc(avg_child_participants), desc(avg_adult_participants))
