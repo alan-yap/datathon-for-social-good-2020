@@ -6,9 +6,12 @@ library(readxl)
 library(chron)
 library(fs)
 library(factoextra)
+library(stats)
 library(cluster)
-library(Rtsne)
 library(nousstyle)
+library(nousutils)
+
+
 
 
 # Run all the custom functions stored in folder.
