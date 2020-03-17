@@ -10,6 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 load("all_objects.RData")
 library(nousstyle)
 library(tidyverse)
+library(factoextra)
+library(stats)
+library(cluster)
+library(knitr)
+library(kableExtra)
+
 
 ```
 
@@ -19,9 +25,9 @@ library(tidyverse)
 
 <!-- When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this: -->
 
-Hub features are summarised in three dataframes 
+Hub features are summarised in two dataframes 
 
-1. hub_feature contains all numerical features by hubs from 2016 to 2019. Use this for cluster analysis or principal component analysis.
+1. hub_feature contains all numerical features by hubs from 2016 to 2019. Inactive hubs are denoted by 0 in status_at_Dec_19 column. This dataframe is used for cluster analysis (see the next section <a href="#cluster">here</a>)
 
 ```{r}
 glimpse(hub_feature)
@@ -33,13 +39,7 @@ glimpse(hub_feature)
 glimpse(common_program)
 ```
 
-3. status is a mixed dataframe indicating the status of each hub as at the end of 2019 and number of years in operation
-
-```{r}
-glimpse(status)
-```
-
-These dataframes are kept separate to avoid creating a mixed dataframe. The next set of exploratory analysis looks at large hubs vs small hubs.
+The next set of exploratory analysis looks at large hubs vs small hubs.
 
 ## Large hubs
 
@@ -144,7 +144,8 @@ common_program %>%
   labs(title = "Top three most common programs",
        y = "Activity count") +
   scale_y_continuous(breaks = seq(0, 1000, 100),
-                     limits = c(0, 1000)) +
+                     limits = c(0, 1000),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 
 ```
@@ -166,7 +167,8 @@ hub_feature %>%
   labs(title = "Annual volunteer count",
        y = "Count") +
   scale_y_continuous(breaks = seq(0, 8000, 500),
-                     limits = c(0, 8000)) +
+                     limits = c(0, 8000),
+                     labels= function(x) format(x, big.mark = ",", scientific = FALSE)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 
 ```
@@ -350,6 +352,71 @@ status %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 
 ```
+
+## Cluster analysis
+
+<a id="cluster"></a>Select six variables representing annual counts of programs, activities, participants and volunteers, hub's operation status, and years in operation for the cluster analysis. 
+
+Bring all selected variables to the same magnitude by scaling.
+
+Determine the optimum number of clusters in the data using the elbow method.
+
+```{r, echo=TRUE}
+fviz_nbclust(scale_data, kmeans, method = "wss") +
+  geom_vline(xintercept = 5, linetype = 2)
+```
+
+Alternatively, determine the optimum number of clusters in the data using the silhouette method.
+
+```{r, echo=TRUE}
+fviz_nbclust(scale_data, kmeans, method = "silhouette") 
+```
+
+Optimum number of clusters range from 3 to 5 clusters. Start by computing k-means with k = 5
+
+```{r, echo=TRUE}
+set.seed(123)
+
+km.res <- kmeans(scale_data, 5, nstart = 25)
+
+print(km.res)
+
+```
+
+Compute the mean of each variable by clusters 
+
+```{r, echo=TRUE}
+aggregate(scale_data, by=list(cluster=km.res$cluster), mean)
+```
+
+Visualise k-means clusters of all hubs for k = 5
+
+```{r, echo=TRUE}
+cluster_data_final <- cbind(cluster_data, cluster = km.res$cluster)
+
+fviz_cluster(km.res, cluster_data_final, ellipse.type = "norm", pointsize = 1, labelsize = 8, repel = TRUE)
+
+```
+
+All large hubs from the previous section belong to clusters 4 and 5 whilst all small hubs belong to clusters 1, 2 and 3. The following table summarises the clusters
+
+```{r, echo=FALSE}
+cluster_table <- data.frame(Clusters = c(1:5),
+                            `Hub counts` = km.res$size,
+                            Descriptions = c("Extinct – inactive hub as of Dec 2019",
+                                     "Young bees – small number of programs offered, average activity and participant counts, average hub age of about one year",
+                                     "Maturing hives – significant program, activity and participant counts (but not many volunteers), haven’t been operating as long",
+                                     "A hive of activities– lots of programs, activities, participants, volunteers and been operating for a long time!",
+                                     "Too many bees – Large number of participants and 7000k+ volunteers in a year, this must be a data entry error"),
+                            check.names = FALSE) 
+
+kable(cluster_table, align = c("c", "c", "l")) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+
+
+
+```
+
 
 
 <!-- Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot. -->
