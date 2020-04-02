@@ -8,18 +8,20 @@
 #
 # Feb 2020
 
+# ====================== Read data =======================
+suppressWarnings(
+  hub_raw <- read_csv("1_Data/Internal data track/Datathon - CHA activities 2016-2020.csv"))
+
+# read_csv will return a warning for 151524 parsing failures in three cols where the first two cols should be ignored: 
+# "LastModifiedDateTime", "LastModifiedDateTime.1" & "DSS_ClientParticipants"
+# 
+# There is only one parsing failure in DSS_ClientParticipants: obs 156494 where DSS_ClientParticipants is NA
+
 
 # A general function to prepare the entire internal data set 
 read_clean_data <- function(){
   
-  # ====================== Read data =======================
-  suppressWarnings(
-    hub_raw <- read_csv("1_Data/Internal data track/Datathon - CHA activities 2016-2020.csv"))
-  
-  # read_csv will return a warning for 151524 parsing failures in three cols where the first two cols should be ignored: 
-  # "LastModifiedDateTime", "LastModifiedDateTime.1" & "DSS_ClientParticipants"
-  # 
-  # There is only one parsing failure in DSS_ClientParticipants: obs 156494 where DSS_ClientParticipants is NA
+ 
   
   # ===================== Clean ============================
   

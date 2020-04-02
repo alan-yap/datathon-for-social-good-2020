@@ -28,7 +28,7 @@ plot_heatmap_child <- function(){
     select(day, week_of_year, avg_child_participants, text) %>% 
     ggplot(aes(x = day, y = week_of_year, fill = round(avg_child_participants), text = text)) + 
     geom_raster() +
-    scale_fill_gradient(low = "grey", high = "orange") + 
+    scale_fill_gradient(low = "dodgerblue4", high = "red") + 
     labs(x = "Day", y = "Week of year", fill = "Average child parcipants\nper activity") + 
     theme(plot.title = element_text(size = 12),
           axis.title = element_text(size = 8),
@@ -46,7 +46,7 @@ plot_heatmap_adult <- function(){
     select(day, week_of_year, avg_adult_participants, text) %>% 
     ggplot(aes(x = day, y = week_of_year, fill = round(avg_adult_participants), text = text)) + 
     geom_raster() +
-    scale_fill_gradient(low = "grey", high = "orange") + 
+    scale_fill_gradient(low = "dodgerblue4", high = "red") + 
     labs(x = "Day", y = "Week of year", fill = "Average adult parcipants\nper activity") + 
     theme(plot.title = element_text(size = 12),
           axis.title = element_text(size = 8),
@@ -55,7 +55,9 @@ plot_heatmap_adult <- function(){
           legend.text = element_text(size = 8))
 }
 
-ggplotly(p, tooltip = "text")
+df_2019 <- read_clean_data() %>% 
+  mutate(day = factor(day, c('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'))) %>% 
+  filter(year == 2019)
 
 duration_df <- df_2019 %>% 
   mutate(duration = as.duration(EndTime - StartTime)) %>% 
@@ -136,3 +138,4 @@ fit_child <- function(){
                      term:day, data = fit_data); summary(fit_data)
   pull_fit_result(fit)
 }
+
